@@ -3,5 +3,21 @@ allure*
 .idea
 report.html
 assets
-__pycache__
+*__pycache__*
 *.log
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest cache
+.pytest_cache/
+
+# Allure generated folders
+allure-results/
+allure-report/
+
+# Editor/IDE
+.vscode/
+*.swp
