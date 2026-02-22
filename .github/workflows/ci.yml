@@ -3,10 +3,8 @@ name: CI
 on:
   push:
 
-# Permissions required to allow GitHub Actions to publish to Pages
 permissions:
   contents: write
-  pages: write
 
 jobs:
   build:
@@ -15,10 +13,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: true
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -41,29 +35,15 @@ jobs:
           fi
 
       - name: Run tests and produce Allure results
-        # Run all tests but do not fail the job on test failures so we can still generate/upload the Allure report
         run: |
           mkdir -p allure-results
           pytest -q --alluredir=allure-results || true
-          echo "pytest exit code captured above (0 means success)"
-          echo "Generated files in allure-results:"
-          ls -la allure-results | head -n 50
 
       - name: Install Allure CLI
-        run: |
-          npm install -g allure-commandline --no-fund --no-update-notifier
+        run: npm install -g allure-commandline --no-fund --no-update-notifier
 
-      - id: generate_report
-        name: Generate Allure HTML report
-        run: |
-          if [ -d "allure-results" ] && [ "$(ls -A allure-results)" ]; then
-            allure generate allure-results -o allure-report --clean
-            echo "Allure report generated in ./allure-report"
-            echo "report_found=true" >> $GITHUB_OUTPUT
-          else
-            echo "No allure-results found, skipping generation"
-            echo "report_found=false" >> $GITHUB_OUTPUT
-          fi
+      - name: Generate Allure HTML report
+        run: allure generate allure-results -o allure-report --clean
 
       - name: Upload Allure report artifact
         uses: actions/upload-artifact@v4
@@ -71,34 +51,9 @@ jobs:
           name: allure-report
           path: allure-report
 
-      - name: Prepare repo for Pages deploy (checkout + git config)
-        if: ${{ steps.generate_report.outputs.report_found == 'true' }}
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: true
-          token: ${{ secrets.GH_PAGES_TOKEN }}
-
-      - name: Configure git and debug remote
-        if: ${{ steps.generate_report.outputs.report_found == 'true' }}
-        run: |
-          git --version
-          echo "Git remote info:"
-          git remote -v || true
-          echo "Configuring git user.name and user.email"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          echo "Branches:"
-          git branch -a || true
-
       - name: Deploy Allure report to GitHub Pages
-        if: ${{ steps.generate_report.outputs.report_found == 'true' }}
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.GH_PAGES_TOKEN }}
+          personal_token: ${{ secrets.GH_PAGES_TOKEN }}
           publish_dir: ./allure-report
           publish_branch: gh-pages
-          user_name: github-actions[bot]
-          user_email: 41898282+github-actions[bot]@users.noreply.github.com
-          allow_empty_commit: true
-          force_orphan: true
