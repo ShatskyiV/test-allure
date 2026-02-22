@@ -1,9 +1,8 @@
-import allure
 import pytest
 
 pytestmark = [
-    allure.epic("Suite Three"),
-    allure.feature("Three Two"),
+    pytest.mark.mark_epic("Suite Three"),
+    pytest.mark.mark_feature("Three Two"),
 ]
 
 
