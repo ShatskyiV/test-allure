@@ -36,7 +36,7 @@ jobs:
 
       - name: Run tests and produce Allure results
         run: |
-          mkdir -p allure-results
+          rm -rf allure-results && mkdir -p allure-results
           pytest -q --alluredir=allure-results || true
 
       - name: Install Allure CLI

@@ -3,3 +3,5 @@ allure*
 .idea
 report.html
 assets
+__pycache__
+*.log
