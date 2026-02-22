@@ -5,7 +5,7 @@ on:
 
 # Permissions required to allow GitHub Actions to publish to Pages
 permissions:
-  contents: read
+  contents: write
   pages: write
 
 jobs:
@@ -15,6 +15,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -67,9 +71,36 @@ jobs:
           name: allure-report
           path: allure-report
 
+      - name: Prepare repo for Pages deploy (checkout + git config)
+        if: ${{ steps.generate_report.outputs.report_found == 'true' }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git and debug remote
+        if: ${{ steps.generate_report.outputs.report_found == 'true' }}
+        run: |
+          git --version
+          echo "Git remote info:"
+          git remote -v || true
+          echo "Testing access to origin (ls-remote):"
+          git ls-remote origin || true
+          echo "Configuring git user.name and user.email"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          echo "Branches:"
+          git branch -a || true
+
       - name: Deploy Allure report to GitHub Pages
         if: ${{ steps.generate_report.outputs.report_found == 'true' }}
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./allure-report
+          publish_branch: gh-pages
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          allow_empty_commit: true
+          force_orphan: true
