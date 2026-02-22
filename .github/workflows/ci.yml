@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node (for Allure CLI)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Python dependencies
+        run: |
+          if [ -f requirements.txt ]; then
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+          else
+            python -m pip install --upgrade pip
+            pip install pytest allure-pytest
+          fi
+
+      - name: Run tests and produce Allure results
+        run: |
+          mkdir -p allure-results
+          pytest --maxfail=1 -q --alluredir=allure-results
+
+      - name: Install Allure CLI
+        run: |
+          npm install -g allure-commandline --no-fund --no-update-notifier
+
+      - name: Generate Allure HTML report
+        run: |
+          if [ -d "allure-results" ] && [ "$(ls -A allure-results)" ]; then
+            allure generate allure-results -o allure-report --clean
+            echo "Allure report generated in ./allure-report"
+          else
+            echo "No allure-results found, skipping generation"
+          fi
+
+      - name: Upload Allure report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: allure-report
+
