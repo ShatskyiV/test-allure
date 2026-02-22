@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: true
-          token: ${{ secrets.GH_PAGES_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -78,16 +78,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
           token: ${{ secrets.GH_PAGES_TOKEN }}
-
-      - name: Authenticate git remote with GH_PAGES_TOKEN
-        if: ${{ steps.generate_report.outputs.report_found == 'true' }}
-        run: |
-          echo "Setting authenticated origin URL using GH_PAGES_TOKEN"
-          git remote set-url origin https://x-access-token:${{ secrets.GH_PAGES_TOKEN }}@github.com/${{ github.repository }}.git
-          echo "Current remotes:"
-          git remote -v
-          echo "Verifying access (ls-remote):"
-          git ls-remote origin || true
 
       - name: Configure git and debug remote
         if: ${{ steps.generate_report.outputs.report_found == 'true' }}
