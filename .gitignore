@@ -1,0 +1,5 @@
+.venv
+allure*
+.idea
+report.html
+assets
